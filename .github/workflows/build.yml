@@ -1,0 +1,114 @@
+name: update
+on:
+  schedule:
+    - cron: '0 0 1 * *'
+  workflow_dispatch:
+permissions:
+    contents: write
+    discussions: write
+jobs:
+    characterinfo:
+      runs-on: ubuntu-22.04
+      steps: 
+            - name: 清理空间
+              run: |
+                sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc /etc/mysql /etc/php
+                sudo -E apt-mark hold grub-efi-amd64-signed
+                sudo -E apt update
+                sudo -E apt -y purge azure-cli* docker* ghc* zulu* llvm* firefox google* dotnet* powershell* openjdk* mysql* php* mongodb* dotnet* snap* 2>&1
+
+            - name: 将存储库签出到运行器
+              uses: actions/checkout@v5
+
+            - uses: actions/setup-python@v5
+              with:
+                python-version: 3.11
+                architecture: x64
+
+            - name: 安装依赖
+              run: |
+                pip install -r requirements.txt
+                sudo apt-get -y install bzip2 wget curl jp unzip zstd
+
+            - name: 下载与解压
+              run: |
+                mkdir -p bgm vndb wiki
+
+                # BGM
+                LATEST_INFO=$(curl -s https://raw.githubusercontent.com/bangumi/Archive/master/aux/latest.json)
+                DOWNLOAD_URL=$(echo "$LATEST_INFO" | jq -r '.browser_download_url')         
+                echo "Latest download URL: $DOWNLOAD_URL"
+                wget -O 'bgm/bgm_archive.zip' "$DOWNLOAD_URL"
+                unzip -o -d . bgm/bgm_archive.zip
+                ls -R
+
+                # VNDB
+                wget -O 'vndb/vndb.tar.zst' 'https://dl.vndb.org/dump/vndb-db-latest.tar.zst'
+                tar -I zstd -xvf  vndb/vndb.tar.zst -C vndb/
+                ls -R vndb/
+
+                ## jpwiki
+                wget -O 'wiki/jawiki-latest-pages-articles.xml.bz2' 'https://dumps.wikimedia.org/jawiki/latest/jawiki-latest-pages-articles.xml.bz2'
+                bzip2 -d 'wiki/jawiki-latest-pages-articles.xml.bz2'
+                ls -la wiki/
+
+            - name: 处理维基百科数据
+              run: python scripts/get_jp_wiki.py --input 'wiki/jawiki-latest-pages-articles.xml'
+                
+            - name: 处理数据
+              run: |
+                python scripts/get_jp_surname.py
+                python scripts/get_vndb.py
+                python scripts/get_chars.py
+
+            - name: 上传文件
+              uses: actions/upload-artifact@v5
+              with:
+                  name: characterinfo
+                  path: "character.jsonl"
+
+    push: 
+        needs: characterinfo
+        runs-on: ubuntu-22.04
+        steps:
+          - name: 签出仓库
+            uses: actions/checkout@v5
+
+          - name: 下载 characterinfo
+            uses: actions/download-artifact@v5
+            with:
+                name: characterinfo
+
+          - name: 准备分块数据
+            run: |
+                mkdir -p upload/deploy/info
+                mkdir -p upload/deploy/index
+                
+                python scripts/get_chars_chunk.py
+                
+                mkdir -p upload/release_assets
+                cp character.jsonl upload/release_assets/
+
+          - name: 生成 Release 信息
+            id: release-info
+            run: |
+                echo "处理完成于 $(date +"%Y-%m-%d %H:%M")" > upload/release_assets/release.txt
+                echo "RELEASE_NAME=Character-Dataset v$(date +"%y.%m.%d-%H%M")" >> "$GITHUB_OUTPUT"
+                echo "RELEASE_TAG_NAME=v$(date +"%y.%m.%d-%H%M")" >> "$GITHUB_OUTPUT"
+
+          - name: 上传到 Release
+            uses: softprops/action-gh-release@v0.1.15
+            with:
+                name: ${{ steps.release-info.outputs.RELEASE_NAME }}
+                tag_name: ${{ steps.release-info.outputs.RELEASE_TAG_NAME }}
+                files: upload/release_assets/*
+                body_path: upload/release_assets/release.txt
+
+          - name: chunks 部署到 data 分支
+            uses: JamesIves/github-pages-deploy-action@v4
+            with:
+                folder: upload/deploy
+                branch: data
+                git-config-name: github-actions[bot]
+                git-config-email: github-actions[bot]@users.noreply.github.com
+                clean: true
