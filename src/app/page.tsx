@@ -39,11 +39,7 @@ export default function Home() {
         setApiConfig(config)
     }, [])
 
-    const handleSkillGenerated = useCallback((skill: SkillOutput) => {
-        setGeneratedSkill(skill)
-    }, [])
-
-    const handleSkillChange = useCallback((skill: SkillOutput) => {
+    const handleSkillUpdate = useCallback((skill: SkillOutput) => {
         setGeneratedSkill(skill)
     }, [])
 
@@ -55,79 +51,92 @@ export default function Home() {
 
     return (
         <main className="space-y-16">
-            <motion.div
+            <motion.header
                 variants={SECTION_VARIANTS}
                 initial="initial"
                 animate="animate"
-                className="text-center space-y-4"
+                className="text-center space-y-4 pb-8"
             >
-                <h1 className="font-serif text-5xl font-semibold tracking-wide">
+                <h1 className="font-serif text-5xl tracking-wide">
                     GalSkill
                 </h1>
-                <p className="text-sm italic opacity-60">
+                <p className="text-sm text-olive">
                     角色 Skill 蒸馏工具 · 将角色数据转化为 Skill
                 </p>
-            </motion.div>
+            </motion.header>
 
-            <ModelConfig onConfigChange={handleApiConfigChange} />
-            <SearchBox onCharacterSelect={handleCharacterSelect} />
+            <hr className="divider" />
 
-            <AnimatePresence mode="wait">
-                {selectedCharacter && (
-                    <motion.section
-                        key={selectedCharacter.id}
-                        variants={SECTION_VARIANTS}
-                        initial="initial"
-                        animate="animate"
-                        exit="exit"
-                        className="space-y-8"
-                    >
+            <section className="space-y-5">
+                <h2 className="section-title">模型配置</h2>
+                <ModelConfig onConfigChange={handleApiConfigChange} />
+            </section>
 
-                        <CharacterDetail
-                            character={selectedCharacter}
-                            onClose={handleDetailClosed}
-                        />
+            <section className="space-y-5">
+                <h2 className="section-title">搜索角色</h2>
+                <SearchBox onCharacterSelect={handleCharacterSelect} />
+            </section>
 
-                        <DialogueInput
-                            character={selectedCharacter}
-                            onDialoguesChange={handleDialoguesChange} />
+            {selectedCharacter && (
+                <>
+                    <hr className="divider-dotted" />
 
-                        <DistillProgress
-                            character={selectedCharacter}
-                            rawText={rawText}
-                            dialogues={dialogues}
-                            apiConfig={apiConfig}
-                            onSkillGenerated={handleSkillGenerated}
-                        />
+                    <AnimatePresence mode="wait">
+                        <motion.section
+                            key={selectedCharacter.id}
+                            variants={SECTION_VARIANTS}
+                            initial="initial"
+                            animate="animate"
+                            exit="exit"
+                            className="space-y-5"
+                        > 
+                            <CharacterDetail
+                                    character={selectedCharacter}
+                                    onClose={handleDetailClosed}
+                            />
+                            <DialogueInput
+                                    character={selectedCharacter}
+                                    onDialoguesChange={handleDialoguesChange}
+                            />
+                            <DistillProgress
+                                    character={selectedCharacter}
+                                    rawText={rawText}
+                                    dialogues={dialogues}
+                                    apiConfig={apiConfig}
+                                    onSkillGenerated={handleSkillUpdate}
+                            />
+                            <SkillExport
+                                    skill={generatedSkill}
+                                    character={selectedCharacter}
+                                    onSkillChange={handleSkillUpdate}
+                            />
+                        </motion.section>
+                    </AnimatePresence>
+                </>
+            )}
 
-                        <SkillExport
-                            skill={generatedSkill}
-                            character={selectedCharacter}
-                            onSkillChange={handleSkillChange}
-                        />
-                    </motion.section>
-                )}
-            </AnimatePresence>
-
+            <hr className="divider" />
             <motion.footer
                 variants={SECTION_VARIANTS}
                 initial="initial"
                 animate="animate"
-                className="text-center pt-32 space-y-4"
+                className="text-center pt-8 space-y-3"
             >
-                <p className="text-xs opacity-40 italic">
+                <p className="text-xs text-stone">
                     GalSkill · 译作心之痕迹
                 </p>
-                <p className="text-xs opacity-30 text-accent dark:text-accent-dark">
-                    数据来源:&nbsp;&nbsp;
-                    <a href={"https://bgm.tv/"} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                        {"Bangumi"}
-                    </a> ·
-                    <a href={"https://vndb.org/"} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                        {"VNDB"}
-                    </a> ·
-                    <a href={"https://wikipedia.org/wiki/"} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                        {"维基百科"}
+                <p className="text-xs text-stone flex justify-center gap-x-2">
+                    <span>数据来源:</span>
+                    <a href="https://bgm.tv/" target="_blank" rel="noopener noreferrer" className="gs-link">
+                        Bangumi
+                    </a>
+                    <span>·</span>
+                    <a href="https://vndb.org/" target="_blank" rel="noopener noreferrer" className="gs-link">
+                        VNDB
+                    </a>
+                    <span>·</span>
+                    <a href="https://wikipedia.org/wiki/" target="_blank" rel="noopener noreferrer" className="gs-link">
+                        维基百科
                     </a>
                 </p>
             </motion.footer>

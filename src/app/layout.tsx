@@ -13,11 +13,12 @@ export default function RootLayout({
 }) {
     return (
         <html lang="zh-CN">
-            <body className="paper-texture min-h-screen flex flex-col pt-[5vh]">
-                <div className=" w-full mx-auto max-w-[60rem] px-6 py-12">
+            <body className="min-h-screen flex flex-col">
+                <div className="w-full mx-auto max-w-[1120px] px-16 py-16">
                     {children}
                 </div>
             </body>
         </html>
     )
 }
+

@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { CharacterData } from '@/lib/db'
 import { DialogueEntry, SkillOutput, distillCharacterIteratively } from '@/lib/llmClient'
 import { APIConfig, ApiConfigManager } from '@/lib/apiConfig'
-import { SECTION_VARIANTS, EXPAND_VARIANTS } from '@/lib/animations'
+import { SECTION_VARIANTS } from '@/lib/animations'
+import Spinner from '@/components/Spinner'
 
 interface DistillProgressProps {
     character: CharacterData | null
@@ -26,14 +27,8 @@ export default function DistillProgress({
     const [progress, setProgress] = useState(0)
     const [status, setStatus] = useState('')
     const [error, setError] = useState<string | null>(null)
-    const [llmOutput, setLlmOutput] = useState<string | null>(null)
 
-    const canDistill = useMemo(() => {
-        const result = character &&
-            dialogues.length > 0 &&
-            ApiConfigManager.validate(apiConfig).valid;
-        return result
-    }, [character, dialogues, apiConfig])
+    const canDistill = character && dialogues.length > 0 && ApiConfigManager.validate(apiConfig).valid
 
     const handleDistill = useCallback(async () => {
         if (!character) return setError('请先选择一个角色')
@@ -45,7 +40,6 @@ export default function DistillProgress({
         setIsDistilling(true)
         setProgress(0)
         setError(null)
-        setLlmOutput(null)
 
         try {
             setStatus('正在蒸馏...');
@@ -71,27 +65,24 @@ export default function DistillProgress({
         } finally {
             setIsDistilling(false)
         }
-    }, [character, dialogues, apiConfig, onSkillGenerated]);
+    }, [character, rawText, dialogues, apiConfig, onSkillGenerated]);
 
     return (
-        <motion.div
+        <motion.section
             variants={SECTION_VARIANTS}
             initial="initial"
             animate="animate"
-            className="space-y-4"
+            className="space-y-6"
         >
+            <h2 className="section-title">蒸馏角色 Skill</h2>
             <button
                 onClick={handleDistill}
                 disabled={!canDistill || isDistilling}
-                className="gs-button-primary"
+                className="btn-primary"
             >
                 {isDistilling ? (
                     <span className="flex items-center justify-center gap-2">
-                        <motion.span
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                            className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
-                        />
+                        <Spinner />
                         {status}
                     </span>
                 ) : (
@@ -100,40 +91,23 @@ export default function DistillProgress({
             </button>
 
             {!canDistill && (
-                <p className="text-sm italic opacity-60 text-center">
+                <p className="text-sm font-sans text-center text-stone">
                     请确保已选择角色、输入对话样本并配置 API
                 </p>
             )}
 
             {isDistilling && (
                 <div className="space-y-3">
-                    <div className="relative h-2 bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                    <div className="h-2 rounded-full overflow-hidden bg-sand">
                         <motion.div
-                            className="absolute inset-y-0 left-0 bg-accent-light dark:bg-accent-dark"
+                            className="h-full rounded-full bg-brand"
                             initial={{ width: 0 }}
                             animate={{ width: `${progress}%` }}
                             transition={{ duration: 0.5, ease: 'easeOut' }}
                         />
                     </div>
-                    <p className="text-sm italic opacity-60 text-center">
-                        {status}
-                    </p>
+                    <p className="text-sm text-center text-olive">{status}</p>
                 </div>
-            )}
-
-            {llmOutput && (
-                <motion.div
-                    variants={EXPAND_VARIANTS}
-                    initial="initial"
-                    animate="animate"
-                    exit="exit"
-                    className="max-h-[300px] overflow-y-auto p-4 bg-gray-100 dark:bg-gray-800
-                     border border-gray-200 dark:border-gray-700"
-                >
-                    <p className="text-xs font-mono whitespace-pre-wrap opacity-80">
-                        {llmOutput}
-                    </p>
-                </motion.div>
             )}
 
             {error && (
@@ -145,6 +119,6 @@ export default function DistillProgress({
                     {error}
                 </motion.p>
             )}
-        </motion.div>
+        </motion.section>
     )
 }

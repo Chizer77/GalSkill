@@ -22,7 +22,7 @@ export default function SearchBox({ onCharacterSelect }: SearchBoxProps) {
             try {
                 await loadSearchIndex()
                 setDbStatus('ready')
-            } catch (err) {
+            } catch {
                 if (retries > 0) return init(retries - 1)
                 setDbStatus('error')
             }
@@ -71,32 +71,38 @@ export default function SearchBox({ onCharacterSelect }: SearchBoxProps) {
     }
 
     return (
-        <motion.div
+        <motion.section
             variants={SECTION_VARIANTS}
             initial="initial"
             animate="animate"
-            className="space-y-6"
         >
-            <div className="relative group">
+            <div className="relative">
                 <input
-                    type="text" value={query} onKeyDown={handleKeyDown}
+                    type="text"
+                    value={query}
+                    onKeyDown={handleKeyDown}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder={dbStatus === 'ready' ? "搜索角色名称/Bangumi ID/相关作品名..." : "Loading records..."}
+                    placeholder={dbStatus === 'ready' ? '搜索角色名称 / Bangumi ID / 相关作品名...' : '索引加载中...'}
                     disabled={dbStatus !== 'ready'}
-                    className="w-full px-5 py-3 text-lg placeholder:text-base bg-white/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 font-serif focus:border-accent-light transition-all"
+                    className="gs-input text-base"
+                    aria-label="搜索角色"
                 />
                 {isSearching && (
-                    <div className="absolute right-0 top-1/2 -translate-y-1/2">
-                        <motion.div
-                            animate={{ rotate: 360, opacity: [0.2, 0.5, 0.2] }}
-                            transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
-                            className="w-3 h-3 border-t border-accent-light/40 rounded-full"
-                        />
-                    </div>
+                    <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 border-2 rounded-full border-brand border-t-transparent"
+                        aria-hidden="true"
+                    />
                 )}
             </div>
-            {dbStatus === 'loading' && <p className="mt-1 text-xs opacity-50 italic text-center">索引加载中...</p>}
-            {dbStatus === 'error' && <p className="mt-1 text-xs italic text-center text-red-500">索引加载失败，请刷新</p>}
+
+            {dbStatus === 'loading' && (
+                <p className="mt-2 text-xs text-center text-stone">索引加载中...</p>
+            )}
+            {dbStatus === 'error' && (
+                <p className="mt-2 text-xs text-center text-red-500">索引加载失败，请刷新页面重试</p>
+            )}
 
             <AnimatePresence>
                 {results.length > 0 && (
@@ -105,17 +111,21 @@ export default function SearchBox({ onCharacterSelect }: SearchBoxProps) {
                         initial="initial"
                         animate="animate"
                         exit="exit"
-                        className="border-gray-100 dark:border-gray-800"
+                        className="mt-3 space-y-1"
                     >
                         {results.map((item, i) => (
                             <li key={`${item.offset}-${i}`}>
                                 <button
                                     onClick={() => handleSelect(item)}
-                                    className={`w-full text-left px-4 py-3 font-serif text-lg transition-colors
-                                        ${selectedIndex === i ? 'bg-accent-light/10' : 'hover:bg-accent-light/5'}`}
+                                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors font-serif text-base
+                                        ${selectedIndex === i ? 'bg-tag-bg' : 'hover:bg-tag-bg'}`}
                                 >
                                     {item.keywords[0]}
-                                    {item.keywords[1] && <span className="ml-2 text-sm opacity-40 font-sans">{item.keywords[1]}</span>}
+                                    {item.keywords[1] && (
+                                        <span className="ml-2 text-sm text-olive">
+                                            {item.keywords[1]}
+                                        </span>
+                                    )}
                                 </button>
                             </li>
                         ))}
@@ -124,8 +134,8 @@ export default function SearchBox({ onCharacterSelect }: SearchBoxProps) {
             </AnimatePresence>
 
             {query && !isSearching && results.length === 0 && dbStatus === 'ready' && (
-                <p className="text-center text-sm italic opacity-50">未找到匹配角色</p>
+                <p className="text-center text-sm mt-3 text-stone">未找到匹配角色</p>
             )}
-        </motion.div>
+        </motion.section>
     )
 }

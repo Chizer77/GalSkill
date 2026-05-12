@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
 import { SkillOutput, getCharacterNames } from '@/lib/llmClient'
 import { CharacterData } from '@/lib/db'
 import { SECTION_VARIANTS, EXPAND_VARIANTS } from '@/lib/animations'
+import Spinner from '@/components/Spinner'
 
 type FileType = 'identity' | 'knowledge' | 'relations' | 'styleGuide'
 
@@ -35,6 +36,13 @@ export default function SkillExport({ skill, character, onSkillChange }: SkillEx
     const [exportStatus, setExportStatus] = useState('')
     const [editingFile, setEditingFile] = useState<FileType | null>(null)
     const [editContent, setEditContent] = useState('')
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+    useEffect(() => {
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current)
+        }
+    }, [])
 
     const getFileContent = useCallback((fileKey: FileType): string => {
         if (!skill) return ''
@@ -60,7 +68,7 @@ export default function SkillExport({ skill, character, onSkillChange }: SkillEx
             setEditingFile(fileKey)
             setEditContent(getFileContent(fileKey))
         }
-    }, [getFileContent])
+    }, [editingFile, getFileContent])
 
     const handleSaveEdit = useCallback(() => {
         if (!skill || !editingFile || !onSkillChange) return
@@ -79,11 +87,11 @@ export default function SkillExport({ skill, character, onSkillChange }: SkillEx
             onSkillChange(updatedSkill)
             setEditingFile(null)
             setExportStatus('保存成功')
-            setTimeout(() => setExportStatus(''), 2000)
+            timerRef.current = setTimeout(() => setExportStatus(''), 2000)
         } catch (error) {
             console.error('Invalid JSON format:', error)
             setExportStatus('JSON 格式错误，请检查语法')
-            setTimeout(() => setExportStatus(''), 3000)
+            timerRef.current = setTimeout(() => setExportStatus(''), 3000)
         }
     }, [skill, editingFile, editContent, onSkillChange])
 
@@ -117,7 +125,7 @@ export default function SkillExport({ skill, character, onSkillChange }: SkillEx
             setExportStatus(`导出失败: ${error instanceof Error ? error.message : '未知错误'}`)
         } finally {
             setIsExporting(false)
-            setTimeout(() => setExportStatus(''), 3000)
+            timerRef.current = setTimeout(() => setExportStatus(''), 3000)
         }
     }, [skill, character])
 
@@ -126,28 +134,25 @@ export default function SkillExport({ skill, character, onSkillChange }: SkillEx
     }
 
     return (
-        <motion.div
+        <motion.section
             variants={SECTION_VARIANTS}
             initial="initial"
             animate="animate"
-            className="space-y-4"
+            className="space-y-6"
         >
-            <h2 className="gs-section-title">Skill 导出</h2>
-
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <h2 className="section-title">Skill 导出</h2>
+            <div className="grid grid-cols-2 gap-3">
                 {FILES.map((file) => (
                     <motion.button
                         key={file.key}
                         type="button"
                         onClick={() => handleFileClick(file.key)}
-                        className={`p-3 bg-accent-light/5 text-left transition-all duration-200 cursor-pointer`}
-                        style={{
-                            border: '1px solid var(--color-accent)',
-                            color: 'var(--bg-ink)'
-                        }}
+                        className="p-4 rounded-lg text-left transition-shadow duration-200 bg-ivory border border-border text-near-black hover:shadow-lg"
                     >
-                        <p className="font-serif text-sm opacity-80">{file.name}</p>
-                        <p className="text-xs opacity-50 mt-0.5">{file.description}</p>
+                        <p className="font-serif text-sm">{file.name}</p>
+                        <p className="text-xs mt-1 font-sans text-olive">
+                            {file.description}
+                        </p>
                     </motion.button>
                 ))}
             </div>
@@ -164,12 +169,16 @@ export default function SkillExport({ skill, character, onSkillChange }: SkillEx
                     >
                         <div className="flex justify-between items-center">
                             <div>
-                                <p className="text-sm font-serif opacity-70">{FILES.find(f => f.key === editingFile)?.name}</p>
-                                <p className="text-xs font-serif opacity-50">{FILES.find(f => f.key === editingFile)?.description}</p>
+                                <p className="text-sm font-serif text-near-black">
+                                    {FILES.find(f => f.key === editingFile)?.name}
+                                </p>
+                                <p className="text-xs font-sans text-olive">
+                                    {FILES.find(f => f.key === editingFile)?.description}
+                                </p>
                             </div>
                             <button
                                 onClick={() => setEditingFile(null)}
-                                className="text-xs opacity-50 hover:opacity-100 transition-opacity"
+                                className="text-xs font-sans opacity-50 hover:opacity-100 transition-opacity"
                             >
                                 收起
                             </button>
@@ -178,14 +187,15 @@ export default function SkillExport({ skill, character, onSkillChange }: SkillEx
                         <textarea
                             value={editContent}
                             onChange={(e) => setEditContent(e.target.value)}
-                            className="gs-input min-h-[250px] font-mono text-xs leading-relaxed"
+                            className="gs-textarea min-h-[250px] font-mono text-xs leading-relaxed"
                             spellCheck={false}
+                            aria-label="编辑文件内容"
                         />
 
                         <div className="flex justify-end">
                             <button
                                 onClick={handleSaveEdit}
-                                className="gs-button-primary"
+                                className="btn-primary max-w-[200px]"
                             >
                                 保存修改
                             </button>
@@ -197,15 +207,11 @@ export default function SkillExport({ skill, character, onSkillChange }: SkillEx
             <button
                 onClick={handleExport}
                 disabled={isExporting || !skill}
-                className="gs-button-primary"
+                className="btn-primary"
             >
                 {isExporting ? (
                     <span className="flex items-center justify-center gap-2">
-                        <motion.span
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                            className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
-                        />
+                        <Spinner />
                         导出中...
                     </span>
                 ) : (
@@ -217,11 +223,11 @@ export default function SkillExport({ skill, character, onSkillChange }: SkillEx
                 <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="text-sm text-center opacity-80"
+                    className="text-sm text-center font-sans text-olive"
                 >
                     {exportStatus}
                 </motion.p>
             )}
-        </motion.div>
+        </motion.section>
     )
 }

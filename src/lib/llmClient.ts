@@ -295,7 +295,6 @@ export function buildRawTextIterativePrompt(
     return prompt;
 }
 
-// todo:不然就是并发得对三个文件并行处理，最后guide_line整合总结，重点是看看业界的skill的渐进式触发怎么搞
 function parseLLMResponse(content: string): SkillOutput | null {
     const output: SkillOutput = {
         identity: {
@@ -325,14 +324,14 @@ function parseLLMResponse(content: string): SkillOutput | null {
                 const cleanJson = block.replace(/```json|```/g, '').trim();
                 const parsed = JSON.parse(cleanJson);
 
-                // 深度合并 identity
+                // 合并 identity
                 if (parsed.identity) {
                     output.identity = { ...output.identity, ...parsed.identity };
                 } else if (parsed.personality || parsed.selfPronouns) {
                     output.identity = { ...output.identity, ...parsed };
                 }
 
-                // 深度合并 knowledge (特别处理嵌套的 setting)
+                // 合并 knowledge (特别处理嵌套的 setting)
                 const kn = parsed.knowledge || (parsed.gameTitle ? parsed : null);
                 if (kn) {
                     output.knowledge.gameTitle = kn.gameTitle || output.knowledge.gameTitle;

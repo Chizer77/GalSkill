@@ -24,7 +24,7 @@ export default function DialogueInput({ character, onDialoguesChange }: Dialogue
         const parsed = parseDialogueInput(primaryName, value)
         setDialogues(parsed)
         onDialoguesChange(parsed, value)
-    }, [onDialoguesChange])
+    }, [primaryName, onDialoguesChange])
 
     const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -41,7 +41,7 @@ export default function DialogueInput({ character, onDialoguesChange }: Dialogue
         reader.readAsText(file)
 
         e.target.value = ''
-    }, [onDialoguesChange])
+    }, [primaryName, onDialoguesChange])
 
     const handleClear = useCallback(() => {
         setInput('')
@@ -50,50 +50,47 @@ export default function DialogueInput({ character, onDialoguesChange }: Dialogue
     }, [onDialoguesChange])
 
     return (
-        <motion.div
+        <motion.section
             variants={SECTION_VARIANTS}
             initial="initial"
             animate="animate"
             className="space-y-4"
         >
-            <div className="flex justify-between items-center">
-                <h2 className="gs-section-title">角色样本</h2>
-                <div className="flex gap-2">
-                    <label className="gs-button-secondary">
-                        <input
-                            type="file"
-                            accept=".txt,.json"
-                            onChange={handleFileUpload}
-                            className="hidden"
-                        />
-                        上传文件
-                    </label>
-                    {dialogues.length > 0 && (
-                        <button
-                            onClick={handleClear}
-                            className="px-3 py-1.5 text-sm opacity-60 hover:opacity-100
-                         transition-opacity duration-200"
-                        >
-                            清空
-                        </button>
-                    )}
-                </div>
+            <h2 className="section-title">角色样本</h2>
+            <div className="flex justify-end gap-2">
+                <label className="btn-secondary cursor-pointer">
+                    <input
+                        type="file"
+                        accept=".txt,.json"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                    />
+                    上传文件
+                </label>
+                {dialogues.length > 0 && (
+                    <button
+                        onClick={handleClear}
+                        className="btn-secondary"
+                    >
+                        清空
+                    </button>
+                )}
             </div>
 
             <textarea
                 value={input}
                 onChange={handleInputChange}
+                aria-label="角色语料输入"
                 placeholder={`粘贴角色语料片段...
-  
+
 格式示例：
 「这是日系对话内容」
 “这是中文对话内容”
 "This is English dialogue"
 （角色轻轻喝了一口红茶）—— 旁白与动作描写也会用于分析。
 
-※ 系统会自动识别不同引号，并结合背景叙述分析角色。
-        `}
-                className="gs-input min-h-[250px] font-serif leading-relaxed"
+※ 系统会自动识别不同引号，并结合背景叙述分析角色。`}
+                className="gs-textarea min-h-[250px]"
             />
 
             {dialogues.length > 0 && (
@@ -104,25 +101,29 @@ export default function DialogueInput({ character, onDialoguesChange }: Dialogue
                     exit="exit"
                     className="space-y-2"
                 >
-                    <p className="text-sm opacity-60">
+                    <p className="text-sm font-sans text-olive">
                         已解析 {dialogues.length} 条对话
                     </p>
                     <div className="max-h-[200px] overflow-y-auto space-y-1">
                         {dialogues.slice(0, 50).map((d, idx) => (
-                            <div key={idx} className="text-sm py-1 border-b border-gray-100 dark:border-gray-800">
-                                <span className="font-semibold opacity-70">{d.speaker}: </span>
-                                <span className="opacity-80">{d.text}</span>
+                            <div
+                                key={idx}
+                                className="text-sm py-1.5 border-b border-border-soft text-dark-warm"
+                            >
+                                <span className="font-medium text-near-black">
+                                    {d.speaker}:
+                                </span>{' '}
+                                <span>{d.text}</span>
                             </div>
                         ))}
                         {dialogues.length > 50 && (
-                            <p className="text-xs opacity-50">
+                            <p className="text-xs font-sans text-stone">
                                 还有 {dialogues.length - 50} 条对话...
                             </p>
                         )}
                     </div>
                 </motion.div>
             )}
-        </motion.div>
+        </motion.section>
     )
 }
-
