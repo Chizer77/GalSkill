@@ -69,7 +69,9 @@ const loadingShards = new Set<string>()
 /**
  * Initializes and loads the master index
  */
-export async function loadSearchIndex(): Promise<void> {
+export async function loadSearchIndex(
+    onProgress?: (loaded: number, total: number) => void
+): Promise<void> {
     if (!db.isOpen()) {
         await db.open()
     }
@@ -101,7 +103,7 @@ export async function loadSearchIndex(): Promise<void> {
         }
 
         // Start background download
-        startBackgroundDownload()
+        startBackgroundDownload(onProgress)
     } catch (error) {
         console.error('Failed to load master index:', error)
         const existingCount = await db.loadedShards.count()
@@ -113,18 +115,27 @@ let isDownloading = false
 /**
  * Silently download all shards in the background
  */
-async function startBackgroundDownload() {
+async function startBackgroundDownload(
+    onProgress?: (loaded: number, total: number) => void
+) {
     if (isDownloading) return
     isDownloading = true
 
     try {
         const pendingShards = await db.loadedShards.where('loaded').equals(0).toArray()
+        const total = await db.loadedShards.count()
+        let loaded = total - pendingShards.length
+
         for (const shard of pendingShards) {
             // Re-check in case it was loaded by a search request
             const current = await db.loadedShards.get(shard.char)
             if (current?.loaded === 1) continue
 
-            await loadShard(shard)
+            const success = await loadShard(shard)
+            if (success) {
+                loaded++
+                onProgress?.(loaded, total)
+            }
             // Small delay to avoid blocking the UI thread too much
             await new Promise(resolve => setTimeout(resolve, 50))
         }
@@ -137,9 +148,10 @@ async function startBackgroundDownload() {
 
 /**
  * Loads a single shard into the database
+ * @returns true if the shard was successfully loaded, false otherwise
  */
-async function loadShard(shard: LoadedShard): Promise<void> {
-    if (loadingShards.has(shard.char)) return
+async function loadShard(shard: LoadedShard): Promise<boolean> {
+    if (loadingShards.has(shard.char)) return false
     loadingShards.add(shard.char)
 
     try {
@@ -163,8 +175,10 @@ async function loadShard(shard: LoadedShard): Promise<void> {
             )
             await db.loadedShards.update(shard.char, { loaded: 1 })
         })
+        return true
     } catch (error) {
         console.error(`Failed to load shard ${shard.shardFile}:`, error)
+        return false
     } finally {
         loadingShards.delete(shard.char)
     }
