@@ -1,4 +1,5 @@
 import Dexie, { Table } from 'dexie'
+import { fetchWithFallback, parseCDNUrls, rankUrls } from './cdn'
 
 export interface SearchIndex {
     id?: number
@@ -62,7 +63,15 @@ class GalSkillDB extends Dexie {
 export const db = new GalSkillDB()
 
 const GALSKILL_VERSION_KEY = 'galskill_index_version'
-const INDEX_BASE_URL = process.env.NEXT_PUBLIC_INDEX_BASE_URL
+
+let rankedIndexUrls: string[] | null = null
+
+async function getIndexUrls(): Promise<string[]> {
+    if (rankedIndexUrls) return rankedIndexUrls
+    const urls = parseCDNUrls(process.env.NEXT_PUBLIC_INDEX_BASE_URLS)
+    rankedIndexUrls = await rankUrls(urls)
+    return rankedIndexUrls
+}
 
 const loadingShards = new Set<string>()
 
@@ -77,7 +86,8 @@ export async function loadSearchIndex(
     }
 
     try {
-        const response = await fetch(`${INDEX_BASE_URL}/master.json`, { cache: 'no-cache' })
+        const urls = await getIndexUrls()
+        const response = await fetchWithFallback(urls, 'master.json', { cache: 'no-cache' })
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
 
         const { v: version, m: masterIndex }: { v: string; m: Record<string, string> } = await response.json()
@@ -155,7 +165,8 @@ async function loadShard(shard: LoadedShard): Promise<boolean> {
     loadingShards.add(shard.char)
 
     try {
-        const response = await fetch(`${INDEX_BASE_URL}/${shard.shardFile}`)
+        const primaryUrl = (rankedIndexUrls ?? parseCDNUrls(process.env.NEXT_PUBLIC_INDEX_BASE_URLS))[0]
+        const response = await fetch(`${primaryUrl}/${shard.shardFile}`)
         if (!response.ok) throw new Error(`Failed to fetch shard ${shard.shardFile}`)
 
         const { d: data }: { d: Array<{ k: string[]; f: string; o: number; l: number }> } = await response.json()

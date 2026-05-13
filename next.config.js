@@ -9,13 +9,13 @@ const nextConfig = {
   basePath: isProd ? '/GalSkill' : '',
 
   env: {
-    NEXT_PUBLIC_INDEX_BASE_URL: isProd
-      ? 'https://cdn.jsdelivr.net/gh/Chizer77/GalSkill@data/index'
-      : '/upload/deploy/index',
+    NEXT_PUBLIC_INDEX_BASE_URLS: isProd
+      ? '["https://fastly.jsdelivr.net/gh/Chizer77/GalSkill@data/index", "https://cdn.jsdelivr.net/gh/Chizer77/GalSkill@data/index","https://cdn.statically.io/gh/Chizer77/GalSkill/data/index"]'
+      : '["/upload/deploy/index"]',
 
-    NEXT_PUBLIC_INFO_BASE_URL: isProd
-      ? 'https://cdn.jsdelivr.net/gh/Chizer77/GalSkill@data/info'
-      : '/upload/deploy/info',
+    NEXT_PUBLIC_INFO_BASE_URLS: isProd
+      ? '["https://fastly.jsdelivr.net/gh/Chizer77/GalSkill@data/info", "https://cdn.jsdelivr.net/gh/Chizer77/GalSkill@data/info","https://cdn.statically.io/gh/Chizer77/GalSkill/data/info"]'
+      : '["/upload/deploy/info"]',
   }
 }
 

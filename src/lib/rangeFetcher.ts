@@ -1,6 +1,7 @@
 import { CharacterData } from './db'
+import { fetchWithFallback, parseCDNUrls } from './cdn'
 
-const DATA_BASE_URL = process.env.NEXT_PUBLIC_INFO_BASE_URL
+const infoUrls = parseCDNUrls(process.env.NEXT_PUBLIC_INFO_BASE_URLS)
 
 export async function fetchCharacterByRange(
     file: string,
@@ -9,7 +10,7 @@ export async function fetchCharacterByRange(
 ): Promise<CharacterData | null> {
     try {
         const endOffset = offset + length - 1
-        const response = await fetch(`${DATA_BASE_URL}/${file}`, {
+        const response = await fetchWithFallback(infoUrls, file, {
             headers: {
                 'Range': `bytes=${offset}-${endOffset}`
             }
