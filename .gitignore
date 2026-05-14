@@ -36,4 +36,5 @@ yarn-error.log*
 next-env.d.ts
 
 # Data files (should be downloaded separately)
-public/
+public/*
+!public/assets/
