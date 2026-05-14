@@ -1,5 +1,5 @@
 import Dexie, { Table } from 'dexie'
-import { fetchWithFallback, parseCDNUrls, rankUrls } from './cdn'
+import { fetchWithFallback, parseCDNUrls } from './cdn'
 
 export interface SearchIndex {
     id?: number
@@ -68,8 +68,7 @@ let rankedIndexUrls: string[] | null = null
 
 async function getIndexUrls(): Promise<string[]> {
     if (rankedIndexUrls) return rankedIndexUrls
-    const urls = parseCDNUrls(process.env.NEXT_PUBLIC_INDEX_BASE_URLS)
-    rankedIndexUrls = await rankUrls(urls)
+    rankedIndexUrls = parseCDNUrls(process.env.NEXT_PUBLIC_INDEX_BASE_URLS)
     return rankedIndexUrls
 }
 

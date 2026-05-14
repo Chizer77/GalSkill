@@ -52,10 +52,9 @@ export async function fetchWithFallback(
     path: string,
     options?: RequestInit
 ): Promise<Response> {
-    const ordered = await rankUrls(baseUrls)
     let lastError: Error | null = null
 
-    for (const baseUrl of ordered) {
+    for (const baseUrl of baseUrls) {
         try {
             const response = await fetch(`${baseUrl}/${path}`, options)
             if (response.ok || response.status === 206) return response
