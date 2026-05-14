@@ -3,7 +3,7 @@ import localFont from 'next/font/local'
 import './globals.css'
 
 const tsanger = localFont({
-    src: '../assets/fonts/TsangerJinKai02-W04.ttf',
+    src: '../assets/fonts/TsangerJinKai02-W04.woff2',
     variable: '--font-tsanger',
     weight: '400 500',
     display: 'swap',
