@@ -12,6 +12,7 @@ import { CharacterData } from '@/lib/db'
 import { DialogueEntry, SkillOutput } from '@/lib/llmClient'
 import { APIConfig } from '@/lib/apiConfig'
 import { SECTION_VARIANTS } from '@/lib/animations'
+import SiteIcon from '@/components/SiteIcon'
 
 export default function Home() {
     const [selectedCharacter, setSelectedCharacter] = useState<CharacterData | null>(null)
@@ -55,8 +56,9 @@ export default function Home() {
                 variants={SECTION_VARIANTS}
                 initial="initial"
                 animate="animate"
-                className="text-center space-y-4 pb-8"
+                className="text-center space-y-4"
             >
+                <SiteIcon className="mx-auto w-32" />
                 <h1 className="font-serif text-5xl tracking-wide">
                     GalSkill
                 </h1>
@@ -65,7 +67,7 @@ export default function Home() {
                 </p>
             </motion.header>
 
-            <hr className="divider" />
+            <hr className="divider !mt-6" />
 
             <section className="space-y-5">
                 <h2 className="section-title">模型配置</h2>
