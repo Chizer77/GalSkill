@@ -26,7 +26,7 @@ const config: Config = {
         'tag-bg': 'var(--gs-tag-bg)',
       },
       fontFamily: {
-        serif: ['"TsangerJinKai02"', '"Noto Serif CJK SC"', '"Source Han Serif SC"', 'Georgia', 'serif'],
+        serif: ['var(--font-tsanger)', '"Noto Serif CJK SC"', '"Source Han Serif SC"', 'Georgia', 'serif'],
         sans: ['"Noto Sans SC"', '"Noto Sans CJK SC"', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', '"Fira Code"', 'Consolas', 'monospace'],
       },

@@ -4,14 +4,6 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-@font-face {
-  font-family: "TsangerJinKai02";
-  src: url("/assets/fonts/TsangerJinKai02-W04.ttf") format("truetype");
-  font-weight: 400 500;
-  font-style: normal;
-  font-display: swap;
-}
-
 :root {
   --gs-parchment:   #f5f4ed;
   --gs-ivory:       #faf9f5;
@@ -106,7 +98,7 @@
   .gs-input {
     @apply w-full px-3.5 py-2.5 text-sm font-serif text-near-black
            rounded-md border border-solid;
-    font-family: "TsangerJinKai02", "Noto Serif CJK SC", Georgia, serif;
+    font-family: var(--font-tsanger), "Noto Serif CJK SC", Georgia, serif;
     background: var(--gs-ivory);
     border-color: var(--gs-border);
     transition: border-color 0.2s, box-shadow 0.2s;
