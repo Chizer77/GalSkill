@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/icon.png" width="88" alt="GalSkill logo">
+<img src="docs/icon.png" width="180" alt="GalSkill logo">
 
 # GalSkill
 
